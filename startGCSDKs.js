@@ -7,7 +7,7 @@ function startGCSDKs(clientId) {
         const qParamEnvironment = 'gcTargetEnv';
         const qParamConversationId = 'conversationId';
         let language = '';  
-        let redirectUri = 'https://gc-auto-mute.vercel.app';
+        let redirectUri = 'https://gc-auto-mute-itnav.vercel.app';
         let userDetails = null;
         let gcHostOrigin = '';
         let conversationId = '';
