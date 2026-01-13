@@ -1,0 +1,14 @@
+.status-message {
+    display: none; /* Initially hidden */
+    background-color: #4CAF50; /* Green background */
+    color: white; /* White text */
+    text-align: center; /* Centered text */
+    padding: 20px; /* Some padding */
+    border-radius: 5px; /* Rounded corners */
+    position: fixed; /* Fixed at the top */
+    width: 100%; /* Full width */
+    top: 0; /* At the top of the page */
+    left: 0; /* Align to the left */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* Some shadow for depth */
+    z-index: 1000; /* Ensure it sits on top of other elements */
+}
