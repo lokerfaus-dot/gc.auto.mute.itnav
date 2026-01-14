@@ -59,7 +59,7 @@ function startGCSDKs(clientId) {
 
       // === OAuth (User context) ===
       client.setPersistSettings(true, appName);
-      client.setEnvironment(environment);            // <-- חשוב: "euw2.pure.cloud"
+      client.setEnvironment("euw2.pure.cloud");            // <-- חשוב: "euw2.pure.cloud" הוחלף environment
       await client.loginImplicitGrant(clientId, redirectUri);  // נדרש לשליטת קול  [1](https://community.genesys.com/discussion/error-when-using-apiv2conversationscalls-in-data-action)
 
       const me = await usersApi.getUsersMe();
