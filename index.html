@@ -1,21 +1,38 @@
+
 <!DOCTYPE html>
-<html>
+<html lang="he" dir="rtl">
 <head>
-    <title>Auto mute</title>
-    <script src="https://sdk-cdn.mypurecloud.com/javascript/latest/purecloud-platform-client-v2.min.js"></script>
-    <script src="https://sdk-cdn.mypurecloud.com/client-apps/2.6.3/purecloud-client-app-sdk-de77761d.min.js"></script>
-    <script src="startGCSDKs.js"></script>
-    <script src="main.js"></script>
-    <link rel="stylesheet" href="styles.css">
+  <meta charset="utf-8" />
+  <title>Auto mute</title>
+
+  <!-- Platform SDK (בדפדפן) -->
+  <script src="https://sdk-cdn.mypurecloud.com/javascript/latest/purecloud-platform-client-v2.min.js"></script>
+  <!-- Client App SDK (לא חובה, אבל מומלץ בווידג'ט) -->
+  <script src="https://sdk-cdn.mypurecloud.com/client-apps/2.6.3/purecloud-client-app-sdk-de77761d.min.js"></script>
+
+  <link rel="stylesheet" href="styles.css">
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
 </head>
-<body id="body" style="display: none;">
+<body id="body" style="display:none;">
 
-    <div id="statusMessage" class="status-message"></div>
+  <!-- פס סטטוס -->
+  <div id="statusMessage"
+       class="status-message"
+       role="status"
+       aria-live="polite"
+       aria-atomic="true"></div>
 
-    <script>
-        document.addEventListener('DOMContentLoaded', function () {
-            start();
-        });
-    </script>
+  <!-- מידע עזר (לא חובה) -->
+  <div style="padding:16px; font-family: system-ui; direction: ltr;">
+    <div>Env: <span id="span_environment">-</span></div>
+    <div>Lang: <span id="span_language">-</span></div>
+    <div>User: <span id="span_name">-</span></div>
+  </div>
+
+  <script src="startGCSDKs.js"></script>
+  <script src="main.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', function () { start(); });
+  </script>
 </body>
 </html>

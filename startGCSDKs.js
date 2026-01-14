@@ -1,107 +1,85 @@
+
+// startGCSDKs.js
 function startGCSDKs(clientId) {
-    const console = window.console;
-    return new Promise((resolve, reject) => {
-        const appName = 'Auto mute';
-        const qParamLanguage = 'langTag';
-        const qParamGcHostOrigin = 'gcHostOrigin';
-        const qParamEnvironment = 'gcTargetEnv';
-        const qParamConversationId = 'conversationId';
-        let language = '';  
-        let redirectUri = 'https://gc-auto-mute-itnav.vercel.app';
-        let userDetails = null;
-        let gcHostOrigin = '';
-        let conversationId = '';
-        assignConfiguration();
+  return new Promise(async (resolve, reject) => {
+    try {
+      const appName = 'Auto mute';
 
-        const hostName = new URL(gcHostOrigin).hostname;
-        const parts = hostName.split('.');
-        parts.shift();
-        window.environment = parts.join('.'); //example enviroment value = "mypurecloud.ie" 
-        console.log('window.environment in startGCSDKs:', window.environment);
+      // שמות פרמטרים שמגיעים מה-Interaction Widget
+      const qParamLanguage       = 'langTag';
+      const qParamGcHostOrigin   = 'gcHostOrigin';
+      const qParamEnvironment    = 'gcTargetEnv';
+      const qParamConversationId = 'conversationId';
 
-        const platformClient = require('platformClient');
-        const client = platformClient.ApiClient.instance;
+      // ה-redirect שצריך להיות רשום ב-OAuth Client שלך
+      const redirectUri = window.location.origin;
 
-        document.addEventListener('DOMContentLoaded', function () {
-            var ClientApp = window.purecloud.apps.ClientApp;
-            var myClientApp = new ClientApp({
-                gcHostOriginQueryParam: 'gcHostOrigin',
-                gcTargetEnvQueryParam: 'gcTargetEnv'
-            });
-            const region = myClientApp.gcEnvironment;
+      // קריאת פרמטרים
+      const sp     = new URLSearchParams(window.location.search);
+      const fromLs = (k) => localStorage.getItem(`${appName}_${k}`) || '';
+      const toLs   = (k,v) => v && localStorage.setItem(`${appName}_${k}`, v);
+
+      let language     = sp.get(qParamLanguage)     || fromLs('language')    || '';
+      let gcHostOrigin = sp.get(qParamGcHostOrigin) || fromLs('gcHostOrigin')|| '';
+      toLs('language', language);
+      toLs('gcHostOrigin', gcHostOrigin);
+
+      const conversationId = sp.get(qParamConversationId) || '';
+      if (conversationId) {
+        window.conversationId = conversationId;
+        console.log('Conversation ID from URL:', conversationId);
+      }
+
+      // === Environment ===
+      // תקבל מ-Widget: gcTargetEnv = "euw2.pure.cloud"
+      // ואם לא — נגזור מ-gcHostOrigin, ונגדיר fallback
+      let environment = sp.get(qParamEnvironment) || '';
+      if (!environment && gcHostOrigin) {
+        const host = new URL(gcHostOrigin).hostname; // apps.euw2.pure.cloud
+        environment = host.split('.').slice(1).join('.'); // euw2.pure.cloud
+      }
+      if (!environment) environment = 'euw2.pure.cloud';
+
+      // === SDK בדפדפן (ללא require) ===
+      const platformClient = window.platformClient;
+      const client   = platformClient.ApiClient.instance;
+      const usersApi = new platformClient.UsersApi();
+
+      // Client App SDK (מומלץ בווידג'ט)
+      const ClientApp = window.purecloud?.apps?.ClientApp;
+      let myClientApp = null;
+      if (ClientApp) {
+        myClientApp = new ClientApp({
+          pcEnvironment: environment,
+          gcHostOriginQueryParam: qParamGcHostOrigin,
+          gcTargetEnvQueryParam: qParamEnvironment
         });
+        window.myClientApp = myClientApp;
+      }
 
-        const usersApi = new platformClient.UsersApi();
-        let ClientApp = window.purecloud.apps.ClientApp;
-        let myClientApp = new ClientApp({
-            pcEnvironment: window.environment
-        });
-        window.myClientApp = myClientApp; 
-        client.setPersistSettings(true, appName);
-        client.setEnvironment(window.environment);
-        client.loginImplicitGrant(clientId, redirectUri)
-            .then(data => usersApi.getUsersMe())
-            .then(data => {   
-                userDetails = data;
-            })
-            .then(() => {
-                document.addEventListener('DOMContentLoaded', () => {
-                    document.getElementById('span_environment').innerText = window.environment;
-                    document.getElementById('span_language').innerText = language;
-                    document.getElementById('span_name').innerText = userDetails.name;
-                });
-                resolve(platformClient);
-            })
-            .catch((err) => {
-                console.error("Error during setup:", err);
-                reject(err);
-            });
+      // === OAuth (User context) ===
+      client.setPersistSettings(true, appName);
+      client.setEnvironment(environment);            // <-- חשוב: "euw2.pure.cloud"
+      await client.loginImplicitGrant(clientId, redirectUri);  // נדרש לשליטת קול  [1](https://community.genesys.com/discussion/error-when-using-apiv2conversationscalls-in-data-action)
 
-        function assignConfiguration() {
-            let browser_url = new URL(window.location);
-            let searchParams = new URLSearchParams(browser_url.search);
-            console.log('browser_url: ', browser_url);
-            console.log('searchParams: ', searchParams);
-            
-            if (searchParams.has(qParamConversationId)) {
-                conversationId = searchParams.get(qParamConversationId);
-                window.conversationId = conversationId; 
-                console.log('Conversation ID set from URL parameter:', conversationId);
-            } else {
-                console.log('Conversation ID not found in URL parameters.');
-            }
+      const me = await usersApi.getUsersMe();
 
-            if (searchParams.has(qParamLanguage)) {
-                language = searchParams.get(qParamLanguage);
-                localStorage.setItem(`${appName}_language`, language);
-                console.log('Language set from URL parameter:', language);
-            } else {
-                let local_lang = localStorage.getItem(`${appName}_language`);
-                if (local_lang) {
-                    language = local_lang;
-                    console.log('Language set from localStorage:', language);
-                } else {
-                    console.log('Language not found in both URL parameters and localStorage.');
-                }
-            }
-            if (searchParams.has(qParamGcHostOrigin)) {
-                gcHostOrigin = searchParams.get(qParamGcHostOrigin);
-                localStorage.setItem(`${appName}_gcHostOrigin`, gcHostOrigin);
-                console.log('gcHostOrigin set from URL parameter:', gcHostOrigin);
-            } else {
-                let local_gcHostOrigin = localStorage.getItem(`${appName}_gcHostOrigin`);
-                if (local_gcHostOrigin) {
-                    gcHostOrigin = local_gcHostOrigin;
-                    console.log('gcHostOrigin set from localStorage:', gcHostOrigin);
-                } else {
-                    console.log('gcHostOrigin not found in both URL parameters and localStorage.');
-                }
-            }
-            for (let pair of searchParams.entries()) {
-                console.log(pair[0] + ': ' + pair[1]); 
-            }
-            console.log('Returning gcHostOrigin:', gcHostOrigin);
-            return gcHostOrigin;
-        }
-    });
+      // עדכון UI קטן (לא חובה)
+      const envEl  = document.getElementById('span_environment');
+      const langEl = document.getElementById('span_language');
+      const nameEl = document.getElementById('span_name');
+      if (envEl)  envEl.innerText  = environment;
+      if (langEl) langEl.innerText = language || '-';
+      if (nameEl) nameEl.innerText = me.name || '';
+
+      // חשיפה ל-main.js
+      window.__gcCtx = { platformClient, client, usersApi, me, myClientApp, environment };
+
+      resolve(platformClient);
+    } catch (err) {
+      console.error('Error during setup:', err);
+      reject(err);
+    }
+  });
 }
+``
